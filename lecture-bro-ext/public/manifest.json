@@ -1,0 +1,39 @@
+{
+    "manifest_version": 2,
+    "name": "LectureBro",
+    "description": "This extension will help you to take notes and save them in your local storage.",
+    "version": "1.0",
+    "icons": {
+        "16":  "LectureBroLogo16.png",
+        "48":  "LectureBroLogo48.png",
+        "128": "LectureBroLogo128.png"
+    },
+    "actions": {
+        "default_popup": "index.html",
+        "default_icon": {
+            "16":  "LectureBroLogo16.png",
+            "48":  "LectureBroLogo48.png",
+            "128": "LectureBroLogo128.png"
+        }
+    },
+    "host_permissions": [
+        "http://*/*",
+        "https://*/*"
+    ],
+    "permissions": [
+        "scripting"
+    ],
+    "backgrond": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    "browser_action": {
+        "default_popup": "index.html",
+        "default_icon": {
+            "16":  "LectureBroLogo16.png",
+            "48":  "LectureBroLogo48.png",
+            "128": "LectureBroLogo128.png"
+        }
+    }
+   
+  }
