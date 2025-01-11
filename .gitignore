@@ -1,0 +1,54 @@
+# Systemowe pliki i foldery
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logi
+logs/
+*.log
+*.log.*
+
+# Środowisko frontendowe (Vite/React)
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Środowisko backendowe
+backend/node_modules/
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE i edytory
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# MacOS
+*.DS_Store
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+
+# Zrzuty plików
+*.gz
+*.zip
+*.tgz
+
+# Test coverage
+coverage/
