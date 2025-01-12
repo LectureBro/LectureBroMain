@@ -15,19 +15,6 @@ const LANGUAGES = [
   { value: "pl-PL", label: "Polish" },
 ] as const;
 
-const DUMMY_SENTENCES = [
-  "Welcome to today's lecture on advanced mathematics.",
-  "We'll be covering complex algorithms and their applications.",
-  "First, let's review the basic concepts from last week.",
-  "The key principle to remember is the relationship between variables.",
-  "This formula demonstrates the core concept we're discussing.",
-  "Let's move on to some practical examples.",
-  "Can anyone tell me what they observe in this pattern?",
-  "Remember to take notes on these important points.",
-  "This will be crucial for your upcoming assignments.",
-  "Let's pause here for any questions you might have.",
-];
-
 type Language = (typeof LANGUAGES)[number]["value"];
 
 export default function App() {
@@ -35,16 +22,71 @@ export default function App() {
   const [subtitles, setSubtitles] = useState<string[]>([]);
   const [autoScroll, setAutoScroll] = useState(true);
   const [language, setLanguage] = useState<Language>("en-US");
+  const [loading, setLoading] = useState(false);
 
+  const BASE_URL = "http://localhost:5001";
+
+  // Start Transcription
+  const startTranscription = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/api/transcription/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language }),
+      });
+      const data = await response.json();
+      console.log("Transcription started:", data);
+      setIsRecording(true);
+      setSubtitles([]);
+    } catch (error) {
+      console.error("Error starting transcription:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Process Audio
+  const processAudio = async () => {
+    if (!isRecording) return;
+  
+    try {
+      const response = await fetch(`${BASE_URL}/api/transcription/process`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      console.log("Audio processed:", data);
+      setSubtitles((prev) => [...prev, data.text]);
+    } catch (error) {
+      console.error("Error processing audio:", error);
+    }
+  };
+  
+  // End Transcription
+  const endTranscription = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/api/transcription/end`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      console.log("Transcription ended:", data);
+      setIsRecording(false);
+    } catch (error) {
+      console.error("Error ending transcription:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Simulation of automatic processing (test for frontend)
   useEffect(() => {
     let interval: number | undefined;
 
     if (isRecording) {
-      let index = 0;
       interval = window.setInterval(() => {
-        setSubtitles((prev) => [...prev, DUMMY_SENTENCES[index % DUMMY_SENTENCES.length]]);
-        index++;
-      }, 2000);
+        processAudio();
+      }, 2000); // Every 2 seconds simulation of audio processing
     }
 
     return () => {
@@ -70,11 +112,12 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleStartRecording = () => {
-    if (!isRecording) {
-      setSubtitles([]);
+  const toggleRecording = async () => {
+    if (isRecording) {
+      await endTranscription(); // Stop the transcription session
+    } else {
+      await startTranscription(); // Start a transcription session
     }
-    setIsRecording(!isRecording);
   };
 
   return (
@@ -126,7 +169,11 @@ export default function App() {
               <p className="text-sm font-medium">{isRecording ? "Recording" : "Ready"}</p>
               <p className="text-xs text-muted-foreground">{isRecording ? "Listening to audio..." : "Press record to start"}</p>
             </div>
-            <Button variant={isRecording ? "destructive" : "default"} onClick={handleStartRecording}>
+            <Button
+              variant={isRecording ? "destructive" : "default"}
+              onClick={toggleRecording}
+              disabled={loading}
+            >
               {isRecording ? "Stop" : "Record"}
             </Button>
           </div>
