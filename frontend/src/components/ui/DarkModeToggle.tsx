@@ -2,34 +2,29 @@ import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 
 interface DarkModeToggleProps {
-  onToggle: (isDarkMode: boolean) => void;
+  readonly onToggle: (isDark: boolean) => void;
+  readonly initialState?: boolean;
 }
 
-const DarkModeToggle = ({ onToggle }: DarkModeToggleProps) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+export default function DarkModeToggle({ onToggle, initialState = false }: DarkModeToggleProps) {
+  const [isDark, setIsDark] = useState(initialState);
 
-  // Load the user's preference from local storage or default to light mode
   useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode") === "true";
-    setIsDarkMode(savedMode);
-    onToggle(savedMode); // Call the parent function to set the theme
-  }, []);
+    setIsDark(initialState);
+  }, [initialState]);
 
   const handleToggle = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    localStorage.setItem("darkMode", newMode.toString());
-    onToggle(newMode); // Notify parent component
+    const newState = !isDark;
+    setIsDark(newState);
+    onToggle(newState);
   };
 
   return (
-    <div className="flex items-center">
-      <label htmlFor="dark-mode" className="text-sm font-medium mr-2">
+    <div className="flex items-center space-x-2">
+      <Switch id="dark-mode" checked={isDark} onCheckedChange={handleToggle} />
+      <label htmlFor="dark-mode" className="text-sm font-medium">
         Dark Mode
       </label>
-      <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleToggle} />
     </div>
   );
-};
-
-export default DarkModeToggle;
+}
