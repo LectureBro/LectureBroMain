@@ -1,22 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Settings } from "lucide-react";
-import { useEffect, useState } from "react";
-import DarkModeToggle from "@/components/ui/DarkModeToggle";
-
-const LANGUAGES = [
-  { value: "en-US", label: "English (US)" },
-  { value: "es-ES", label: "Spanish" },
-  { value: "fr-FR", label: "French" },
-  { value: "de-DE", label: "German" },
-  { value: "pl-PL", label: "Polish" },
-] as const;
-
-type Language = (typeof LANGUAGES)[number]["value"];
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useState, useCallback } from "react";
+import { SettingsDialog } from "@/components/SettingsDialog";
+import { Language } from "@/constants/languages";
+import { useAudioProcessing } from "@/hooks/useAudioProcessing";
+import { ChevronDown } from "lucide-react";
+import jsPDF from "jspdf";
+import { Document, Packer, Paragraph } from "docx";
+import { FileNameDialog } from "@/components/FileNameDialog";
 
 export default function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -25,9 +19,28 @@ export default function App() {
   const [language, setLanguage] = useState<Language>("en-US");
   const [loading, setLoading] = useState(false);
 
+  const [isFileNameDialogOpen, setIsFileNameDialogOpen] = useState(false);
+  const [pendingSaveFormat, setPendingSaveFormat] = useState<"txt" | "pdf" | "docx" | null>(null);
+
   const BASE_URL = "http://localhost:5001";
 
-  // Start Transcription
+  const processAudio = useCallback(async () => {
+    if (!isRecording) return;
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/transcription/process`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      console.log("Audio processed:", data);
+      setSubtitles((prev) => [...prev, data.text]);
+    } catch (error) {
+      console.error("Error processing audio:", error);
+    }
+  }, [isRecording]);
+
+  const { startProcessing, stopProcessing } = useAudioProcessing(isRecording, processAudio);
+
   const startTranscription = async () => {
     setLoading(true);
     try {
@@ -40,30 +53,14 @@ export default function App() {
       console.log("Transcription started:", data);
       setIsRecording(true);
       setSubtitles([]);
+      startProcessing();
     } catch (error) {
       console.error("Error starting transcription:", error);
     } finally {
       setLoading(false);
     }
   };
-  
-  // Process Audio
-  const processAudio = async () => {
-    if (!isRecording) return;
-  
-    try {
-      const response = await fetch(`${BASE_URL}/api/transcription/process`, {
-        method: "POST",
-      });
-      const data = await response.json();
-      console.log("Audio processed:", data);
-      setSubtitles((prev) => [...prev, data.text]);
-    } catch (error) {
-      console.error("Error processing audio:", error);
-    }
-  };
-  
-  // End Transcription
+
   const endTranscription = async () => {
     setLoading(true);
     try {
@@ -73,6 +70,7 @@ export default function App() {
       const data = await response.json();
       console.log("Transcription ended:", data);
       setIsRecording(false);
+      stopProcessing();
     } catch (error) {
       console.error("Error ending transcription:", error);
     } finally {
@@ -80,44 +78,64 @@ export default function App() {
     }
   };
 
-  // Simulation of automatic processing (test for frontend)
-  useEffect(() => {
-    let interval: number | undefined;
-
-    if (isRecording) {
-      interval = window.setInterval(() => {
-        processAudio();
-      }, 2000); // Every 2 seconds simulation of audio processing
-    }
-
-    return () => {
-      if (interval) {
-        window.clearInterval(interval);
-      }
-    };
-  }, [isRecording]);
-
   const handleCopyText = () => {
     navigator.clipboard.writeText(subtitles.join("\n"));
   };
 
-  const handleSaveNotes = () => {
-    const blob = new Blob([subtitles.join("\n")], { type: "text/plain" });
+  const handleSaveNotes = (format: "txt" | "pdf" | "docx") => {
+    setPendingSaveFormat(format);
+    setIsFileNameDialogOpen(true);
+  };
+
+  const saveNotesWithFileName = async (fileName: string) => {
+    if (!pendingSaveFormat) return;
+
+    let blob: Blob;
+
+    switch (pendingSaveFormat) {
+      case "pdf": {
+        const pdf = new jsPDF();
+        subtitles.forEach((subtitle, index) => {
+          pdf.text(subtitle, 10, 10 + index * 10);
+        });
+        blob = pdf.output("blob");
+        break;
+      }
+
+      case "docx": {
+        const doc = new Document({
+          sections: [
+            {
+              properties: {},
+              children: subtitles.map((subtitle) => new Paragraph({ text: subtitle })),
+            },
+          ],
+        });
+        blob = await Packer.toBlob(doc);
+        break;
+      }
+
+      default: // txt
+        blob = new Blob([subtitles.join("\n")], { type: "text/plain" });
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "lecture-notes.txt";
+    a.download = `${fileName}.${pendingSaveFormat}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    setPendingSaveFormat(null);
   };
 
   const toggleRecording = async () => {
     if (isRecording) {
-      await endTranscription(); // Stop the transcription session
+      await endTranscription();
     } else {
-      await startTranscription(); // Start a transcription session
+      await startTranscription();
     }
   };
 
@@ -130,39 +148,7 @@ export default function App() {
               <CardTitle>LectureBro</CardTitle>
               <CardDescription>Live Lecture Assistant</CardDescription>
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Settings</DialogTitle>
-                  <DialogDescription>Configure your recording preferences</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <label htmlFor="language-select" className="text-sm font-medium">
-                      Recognition Language
-                    </label>
-                    <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
-                      <SelectTrigger id="language-select">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LANGUAGES.map((lang) => (
-                          <SelectItem key={lang.value} value={lang.value}>
-                            {lang.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                    {/* Add Dark Mode Toggle */} <DarkModeToggle onToggle={(isDark) => { document.body.classList.toggle('dark', isDark); }} />
-                </div>
-              </DialogContent>
-            </Dialog>
+            <SettingsDialog language={language} setLanguage={setLanguage} />
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -171,11 +157,7 @@ export default function App() {
               <p className="text-sm font-medium">{isRecording ? "Recording" : "Ready"}</p>
               <p className="text-xs text-muted-foreground">{isRecording ? "Listening to audio..." : "Press record to start"}</p>
             </div>
-            <Button
-              variant={isRecording ? "destructive" : "default"}
-              onClick={toggleRecording}
-              disabled={loading}
-            >
+            <Button variant={isRecording ? "destructive" : "default"} onClick={toggleRecording} disabled={loading}>
               {isRecording ? "Stop" : "Record"}
             </Button>
           </div>
@@ -211,11 +193,21 @@ export default function App() {
           <Button variant="outline" size="sm" disabled={subtitles.length === 0} onClick={handleCopyText}>
             Copy
           </Button>
-          <Button size="sm" disabled={subtitles.length === 0} onClick={handleSaveNotes}>
-            Save Notes
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={subtitles.length === 0}>
+                Save Notes <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => handleSaveNotes("txt")}>Save as TXT</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleSaveNotes("pdf")}>Save as PDF</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleSaveNotes("docx")}>Save as DOCX</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardFooter>
       </Card>
+      <FileNameDialog isOpen={isFileNameDialogOpen} onClose={() => setIsFileNameDialogOpen(false)} onSave={saveNotesWithFileName} defaultFileName="lecture-notes" />
     </div>
   );
 }
