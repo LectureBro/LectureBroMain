@@ -3,19 +3,26 @@
   "name": "LectureBro",
   "version": "1.0.0",
   "icons": {
-    "16": "LectureBroLogo16.png",
-    "48": "LectureBroLogo48.png",
+    "16":  "LectureBroLogo16.png",
+    "48":  "LectureBroLogo48.png",
     "128": "LectureBroLogo128.png"
-  },
+},
   "description": "LectureBro is a Chrome extension that helps you take notes during lectures.",
   "action": {
     "default_popup": "index.html",
     "default_icon": {
-      "16": "LectureBroLogo16.png",
-      "48": "LectureBroLogo48.png",
-      "128": "LectureBroLogo128.png"
-    }
+            "16":  "LectureBroLogo16.png",
+            "48":  "LectureBroLogo48.png",
+            "128": "LectureBroLogo128.png"
+        }
   },
-  "permissions": ["tabs", "activeTab", "storage", "scripting"],
-  "host_permissions": ["<all_urls>"]
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
 }
