@@ -1,14 +1,16 @@
 
-# LectureBro Backend
+# LectureBro
 
-The backend for LectureBro is a Node.js server that processes real-time speech-to-text transcription requests. It handles endpoints for starting, processing, and ending transcription sessions.
+LectureBro is a Chrome extension that generates real-time subtitles for live lectures and presentations. It helps students and professionals capture and save important information from audio content.
 
 ## Features
 
-- Start a transcription session
-- Process audio and return transcriptions
-- End transcription sessions
-- Designed to work seamlessly with the LectureBro frontend
+- Real-time speech-to-text transcription
+- Multiple language support
+- Auto-scrolling subtitles
+- Copy transcriptions to clipboard
+- Save transcriptions as text files
+- Dark mode support
 
 ## Installation
 
@@ -16,22 +18,42 @@ The backend for LectureBro is a Node.js server that processes real-time speech-t
 
    ```bash
    git clone https://github.com/yourusername/LectureBro.git
-   cd LectureBro/backend
+   cd LectureBro
    ```
 
-2. Install dependencies:
+2. Install dependencies for the **frontend**:
 
    ```bash
+   cd frontend
    npm install
    ```
 
-3. Start the backend server:
+3. Build the Chrome extension (frontend):
+
+   ```bash
+   npm run build
+   ```
+
+4. Load the extension in Chrome:
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `frontend/build` directory
+
+5. Install dependencies for the **backend**:
+
+   ```bash
+   cd ../backend
+   npm install
+   ```
+
+6. Start the backend server:
 
    ```bash
    npm run dev
    ```
 
-4. Verify the server is running:
+7. Verify the backend is running:
    - Open a browser or API testing tool (like Postman) and make a `POST` request to:
      ```http
      http://localhost:5001/api/transcription/start
@@ -43,21 +65,51 @@ The backend for LectureBro is a Node.js server that processes real-time speech-t
 
 ## Development
 
-### Available Scripts
+### Frontend Development
 
-- `npm run start`: Start the server in production mode.
-- `npm run dev`: Start the server in development mode with `nodemon` for live reloading.
+To start the development server for the frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+### Backend Development
+
+To start the backend server for development with live reloading:
+
+```bash
+cd backend
+npm run dev
+```
 
 ### Tech Stack
 
-- Node.js
-- Express.js
-- CORS
-- Body-parser
+- **Frontend**:
+  - React + TypeScript
+  - Vite
+  - Tailwind CSS
+  - shadcn/ui
+  - Chrome Extensions API
+- **Backend**:
+  - Node.js
+  - Express.js
+  - CORS
+  - Body-parser
 
 ## Project Structure
 
 ```
+frontend/
+├── public/
+│   └── manifest.json    # Chrome extension manifest
+├── src/
+│   ├── components/      # UI components
+│   ├── lib/             # Utility functions
+│   ├── App.tsx          # Main application
+│   └── main.tsx         # Entry point
+└── package.json         # Frontend dependencies
+
 backend/
 ├── src/
 │   ├── routes/          # API route definitions
@@ -65,11 +117,11 @@ backend/
 │   ├── services/        # Backend business logic
 │   └── utils/           # Utility functions
 ├── server.js            # Entry point for the backend
-├── package.json         # Project metadata and dependencies
+├── package.json         # Backend dependencies
 └── README.md            # Documentation for backend
 ```
 
-## API Endpoints
+## API Endpoints (Backend)
 
 | Endpoint                   | Method | Description                     |
 |----------------------------|--------|---------------------------------|
@@ -120,3 +172,8 @@ Response:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
+- [Chrome Extensions Documentation](https://developer.chrome.com/docs/extensions/)
