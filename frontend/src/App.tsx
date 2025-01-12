@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
+import DarkModeToggle from "@/components/ui/DarkModeToggle";
 
 const LANGUAGES = [
   { value: "en-US", label: "English (US)" },
@@ -158,6 +159,7 @@ export default function App() {
                       </SelectContent>
                     </Select>
                   </div>
+                    {/* Add Dark Mode Toggle */} <DarkModeToggle onToggle={(isDark) => { document.body.classList.toggle('dark', isDark); }} />
                 </div>
               </DialogContent>
             </Dialog>
