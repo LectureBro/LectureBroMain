@@ -20,7 +20,7 @@ export function FileNameDialog({ isOpen, onClose, onSave, defaultFileName }: Fil
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent aria-description="Save file Dialog">
         <DialogHeader>
           <DialogTitle>Save File</DialogTitle>
         </DialogHeader>

@@ -12,13 +12,21 @@ export default defineConfig({
           src: "public/manifest.json",
           dest: ".",
         },
+        {
+          src: "public/contentScript.js",
+          dest: ".",
+        },
+        {
+          src: "public/*.png",
+          dest: ".",
+        },
       ],
     }),
   ],
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:5001',
+      "/api": {
+        target: "http://localhost:5001",
         changeOrigin: true,
         secure: false,
       },
@@ -33,7 +41,7 @@ export default defineConfig({
     outDir: "build",
     rollupOptions: {
       input: {
-        main: "./index.html",
+        main: path.resolve(__dirname, "index.html"),
       },
     },
   },

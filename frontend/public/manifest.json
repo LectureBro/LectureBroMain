@@ -2,12 +2,9 @@
   "manifest_version": 3,
   "name": "LectureBro",
   "version": "1.0.0",
-  "icons": {
-    "16": "LectureBroLogo16.png",
-    "48": "LectureBroLogo48.png",
-    "128": "LectureBroLogo128.png"
-  },
-  "description": "LectureBro is a Chrome extension that helps you take notes during lectures.",
+  "description": "Live Lecture Assistant",
+  "permissions": ["activeTab", "storage", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "index.html",
     "default_icon": {
@@ -16,6 +13,26 @@
       "128": "LectureBroLogo128.png"
     }
   },
-  "permissions": ["tabs", "activeTab", "storage", "scripting"],
-  "host_permissions": ["<all_urls>"]
+  "icons": {
+    "16": "LectureBroLogo16.png",
+    "48": "LectureBroLogo48.png",
+    "128": "LectureBroLogo128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
