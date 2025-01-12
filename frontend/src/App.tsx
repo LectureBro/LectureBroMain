@@ -79,14 +79,14 @@ export default function App() {
     }
   };
 
-  // Symulacja automatycznego przetwarzania (test dla frontend)
+  // Simulation of automatic processing (test for frontend)
   useEffect(() => {
     let interval: number | undefined;
 
     if (isRecording) {
       interval = window.setInterval(() => {
         processAudio();
-      }, 2000); // Co 2 sekundy symulacja przetwarzania audio
+      }, 2000); // Every 2 seconds simulation of audio processing
     }
 
     return () => {
@@ -114,9 +114,9 @@ export default function App() {
 
   const toggleRecording = async () => {
     if (isRecording) {
-      await endTranscription(); // Zatrzymaj sesję transkrypcji
+      await endTranscription(); // Stop the transcription session
     } else {
-      await startTranscription(); // Rozpocznij sesję transkrypcji
+      await startTranscription(); // Start a transcription session
     }
   };
 
