@@ -25,7 +25,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+
+    /* Chrome types */
+    "types": ["chrome"]
   },
   "include": ["src"]
 }

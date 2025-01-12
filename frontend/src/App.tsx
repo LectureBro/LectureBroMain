@@ -11,13 +11,21 @@ import { ChevronDown } from "lucide-react";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph } from "docx";
 import { FileNameDialog } from "@/components/FileNameDialog";
+import { usePreferences } from "@/hooks/usePreferences";
 
 export default function App() {
+  const { preferences, updatePreference } = usePreferences();
   const [isRecording, setIsRecording] = useState(false);
   const [subtitles, setSubtitles] = useState<string[]>([]);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [language, setLanguage] = useState<Language>("en-US");
   const [loading, setLoading] = useState(false);
+
+  const handleSetLanguage = (newLanguage: Language) => {
+    updatePreference("language", newLanguage);
+  };
+
+  const toggleDarkMode = () => {
+    updatePreference("darkMode", !preferences.darkMode);
+  };
 
   const [isFileNameDialogOpen, setIsFileNameDialogOpen] = useState(false);
   const [pendingSaveFormat, setPendingSaveFormat] = useState<"txt" | "pdf" | "docx" | null>(null);
@@ -47,7 +55,7 @@ export default function App() {
       const response = await fetch(`${BASE_URL}/api/transcription/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language }),
+        body: JSON.stringify({ language: preferences.language }),
       });
       const data = await response.json();
       console.log("Transcription started:", data);
@@ -140,7 +148,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-[600px] w-[400px] bg-background p-4">
+    <div className={`h-[600px] w-[400px] bg-background p-4 ${preferences.darkMode ? "dark" : ""}`}>
       <Card className="h-full">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -148,9 +156,10 @@ export default function App() {
               <CardTitle>LectureBro</CardTitle>
               <CardDescription>Live Lecture Assistant</CardDescription>
             </div>
-            <SettingsDialog language={language} setLanguage={setLanguage} />
+            <SettingsDialog language={preferences.language} setLanguage={handleSetLanguage} darkMode={preferences.darkMode} toggleDarkMode={toggleDarkMode} />
           </div>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="space-y-0.5">
@@ -171,7 +180,7 @@ export default function App() {
                 <label htmlFor="auto-scroll" className="text-xs text-muted-foreground">
                   Auto-scroll
                 </label>
-                <Switch id="auto-scroll" checked={autoScroll} onCheckedChange={setAutoScroll} />
+                <Switch id="auto-scroll" checked={preferences.autoScroll} onCheckedChange={(checked) => updatePreference("autoScroll", checked)} />
               </div>
             </div>
             <div className="h-[280px] space-y-2 overflow-y-auto rounded-md border bg-muted/50 p-4">
