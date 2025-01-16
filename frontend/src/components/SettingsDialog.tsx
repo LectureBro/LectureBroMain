@@ -27,7 +27,7 @@ export function SettingsDialog({ language, setLanguage, darkMode, toggleDarkMode
           <Settings className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className={`bg-background text-foreground ${darkMode ? "dark" : ""}`}>
+      <DialogContent aria-description="Settings Dialog" className={`bg-background text-foreground ${darkMode ? "dark" : ""}`}>
         <DialogHeader>
           <DialogTitle className="text-foreground">Settings</DialogTitle>
         </DialogHeader>

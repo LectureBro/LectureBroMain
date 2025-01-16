@@ -30,5 +30,5 @@
     /* Chrome types */
     "types": ["chrome"]
   },
-  "include": ["src"]
+  "include": ["src", "public/contentScript.js"]
 }
