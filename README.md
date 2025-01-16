@@ -17,7 +17,7 @@ LectureBro is a Chrome extension that generates real-time subtitles for live lec
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/LectureBro.git
+   git clone https://github.com/LectureBro/LectureBroMain.git
    cd LectureBro
    ```
 
