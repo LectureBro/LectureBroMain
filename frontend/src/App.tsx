@@ -65,7 +65,60 @@ export default function App() {
 
   const { startProcessing, stopProcessing } = useAudioProcessing(isRecording, processAudio);
 
+
+  async function recordVosk() {
+    const resultsContainer = document.getElementById('recognition-result');
+    const partialContainer = document.getElementById('partial');
+
+    partialContainer.textContent = "Loading...";
+
+    const channel = new MessageChannel();
+    console.log("Model is being created...");
+    const model = await Vosk.createModel('./model.tar.gz');
+    console.log("Model created, registering channel");
+    model.registerPort(channel.port1);
+    console.log("Model created and channel registered.");
+    const sampleRate = 48000;
+
+    const recognizer = new model.KaldiRecognizer(sampleRate);
+    recognizer.setWords(true);
+
+    recognizer.on("result", (message) => {
+        const result = message.result;
+        const newSpan = document.createElement('span');
+        newSpan.textContent = `${result.text} `;
+        resultsContainer.insertBefore(newSpan, partialContainer);
+    });
+    recognizer.on("partialresult", (message) => {
+        const partial = message.result.partial;
+
+        partialContainer.textContent = partial;
+    });
+
+    partialContainer.textContent = "Ready";
+
+    const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            channelCount: 1,
+            sampleRate
+        },
+    });
+
+    const audioContext = new AudioContext();
+    await audioContext.audioWorklet.addModule('recognizer-processor.js')
+    const recognizerProcessor = new AudioWorkletNode(audioContext, 'recognizer-processor', { channelCount: 1, numberOfInputs: 1, numberOfOutputs: 1 });
+    recognizerProcessor.port.postMessage({action: 'init', recognizerId: recognizer.id}, [ channel.port2 ])
+    recognizerProcessor.connect(audioContext.destination);
+
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    source.connect(recognizerProcessor);
+  }
+
   const startTranscription = useCallback(async () => {
+    recordVosk()
     setLoading(true);
     try {
       const response = await fetch(`${BASE_URL}/api/transcription/start`, {
@@ -189,7 +242,7 @@ export default function App() {
             <p className="text-sm font-medium">{isRecording ? "Recording" : "Ready"}</p>
             <p className="text-xs text-muted-foreground">{isRecording ? "Listening to audio..." : "Press record to start"}</p>
           </div>
-          <Button variant={isRecording ? "destructive" : "default"} onClick={toggleRecording} disabled={loading}>
+          <Button id="trigger" variant={isRecording ? "destructive" : "default"} onClick={toggleRecording} disabled={loading}>
             {isRecording ? "Stop" : "Record"}
           </Button>
         </div>
@@ -215,7 +268,7 @@ export default function App() {
           <div className="flex-grow overflow-y-auto rounded-md border bg-muted/50 p-4">
             {subtitles.length > 0 ? (
               subtitles.map((subtitle, index) => (
-                <p key={`subtitle-${index}-${subtitle[index]}`} className="text-sm mb-2">
+                <p id="partial" key={`subtitle-${index}-${subtitle[index]}`} className="text-sm mb-2">
                   {subtitle}
                 </p>
               ))
