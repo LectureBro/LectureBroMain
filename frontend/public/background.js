@@ -49,24 +49,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       updateAllTabs(request.show);
       break;
   }
-  if (request.type === 'AUDIO_DATA' && recognizer) {
-    const accepted = recognizer.acceptWaveform(request.payload);
-    if (accepted) {
-      const result = recognizer.result();
-      console.log('Final chunk result:', result);
-      chrome.tabs.sendMessage(sender.tab.id, {
-        type: 'TRANSCRIPT_FINAL',
-        data: result
-      });
-    } else {
-      const partial = recognizer.partialResult();
-      console.log('Partial chunk result:', partial);
-      chrome.tabs.sendMessage(sender.tab.id, {
-        type: 'TRANSCRIPT_PARTIAL',
-        data: partial
-      });
-    }
-  }
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -138,31 +120,3 @@ chrome.tabs.onCreated.addListener((tab) => {
     injectContentScript(tab.id);
   }
 });
-
-
-// Vosk implementation
-let voskModule = null;
-let model = null;
-let recognizer = null;
-// Vosk expects 16kHz audio (unless you have a different model).
-const SAMPLE_RATE = 16000;
-
-// Initialize Vosk in an async function
-async function initVosk() {
-  const module = await import(chrome.runtime.getURL('vosk/vosk.js'));
-  const vosk = await module.default({
-    locateFile: (path) => {
-      if (path.endsWith('.wasm')) {
-        return chrome.runtime.getURL('vosk/vosk.wasm');
-      }
-      return path;
-    },
-  });
-  voskModule = vosk;
-
-  model = new voskModule.Model(chrome.runtime.getURL('vosk/model'));
-  recognizer = new model.Recognizer({ sampleRate: SAMPLE_RATE });
-
-  console.log('Vosk is ready!');
-}
-initVosk();

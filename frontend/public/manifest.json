@@ -3,7 +3,11 @@
   "name": "LectureBro",
   "version": "1.0.0",
   "description": "Live Lecture Assistant",
-  "permissions": ["activeTab", "storage", "tabs", "scripting", "microphone"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "scripting"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "index.html",
@@ -33,10 +37,10 @@
     {
       "resources": [
         "index.html",
-        "vosk/*.wasm",
-        "vosk/model/**/*"],
+        "model.tar.gz",
+        "vosk/model_en/**/*",
+        "vosk/model_pl/**/*"],
       "matches": ["<all_urls>"]
     }
   ]
-
 }
