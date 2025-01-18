@@ -50,12 +50,3 @@ async function init() {
     const source = audioContext.createMediaStreamSource(mediaStream);
     source.connect(recognizerProcessor);
 }
-
-window.onload = () => {
-    const trigger = document.getElementById('trigger');
-    trigger.onmouseup = () => {
-        trigger.disabled = true;
-        console.log("Trigger clicked, should start the init function and recording!");
-        init();
-    };
-}
