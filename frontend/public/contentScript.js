@@ -273,3 +273,112 @@ initializeOverlay();
 
 // Notify the background script that the content script has loaded
 chrome.runtime.sendMessage({ action: "contentScriptLoaded" });
+
+
+// Voice recording
+
+let audioContext;
+let sourceNode;
+let processorNode;
+let micStream;
+let isRecording = false;
+
+const SAMPLE_RATE = 16000; // Vosk default model
+
+function startRecording() {
+  if (isRecording) return;
+  isRecording = true;
+  
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      micStream = stream;
+      audioContext = new AudioContext({ sampleRate: 44100 /* typical mic rate */ });
+      
+      // ScriptProcessorNode is deprecated, but simpler for demos. 
+      processorNode = audioContext.createScriptProcessor(4096, 1, 1);
+      sourceNode = audioContext.createMediaStreamSource(stream);
+      
+      sourceNode.connect(processorNode);
+      processorNode.connect(audioContext.destination);
+      
+      processorNode.onaudioprocess = (audioEvent) => {
+        const inputData = audioEvent.inputBuffer.getChannelData(0);
+        
+        // Resample from 44.1k or 48k to 16k
+        // For brevity, let's assume 44.1k -> 16k. Real code would handle dynamic rates or use OfflineAudioContext.
+        const resampledData = downsampleBuffer(inputData, audioContext.sampleRate, SAMPLE_RATE);
+        const int16data = floatTo16BitPCM(resampledData);
+
+        // Send to background
+        chrome.runtime.sendMessage({
+          type: 'AUDIO_DATA',
+          payload: int16data
+        });
+      };
+    })
+    .catch(err => {
+      console.error('Could not get microphone', err);
+    });
+}
+
+function stopRecording() {
+  if (!isRecording) return;
+  isRecording = false;
+  
+  if (processorNode) processorNode.disconnect();
+  if (sourceNode) sourceNode.disconnect();
+  if (audioContext) audioContext.close();
+  if (micStream) {
+    micStream.getTracks().forEach(track => track.stop());
+  }
+  
+  console.log('Recording stopped.');
+}
+
+// Utility: downsample from e.g. 44100 to 16000
+function downsampleBuffer(buffer, inSampleRate, outSampleRate) {
+  if (outSampleRate === inSampleRate) {
+    return buffer;
+  }
+  const ratio = outSampleRate / inSampleRate;
+  const length = Math.round(buffer.length * ratio);
+  const out = new Float32Array(length);
+  let offsetResult = 0;
+  let offsetBuffer = 0;
+  while (offsetResult < length) {
+    const nextOffsetBuffer = Math.round((offsetResult + 1) / ratio);
+    let accum = 0, count = 0;
+    for (let i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+      accum += buffer[i];
+      count++;
+    }
+    out[offsetResult] = accum / count;
+    offsetResult++;
+    offsetBuffer = nextOffsetBuffer;
+  }
+  return out;
+}
+
+// Utility: Convert Float32 -> Int16
+function floatTo16BitPCM(input) {
+  const output = new Int16Array(input.length);
+  for (let i = 0; i < input.length; i++) {
+    let s = Math.max(-1, Math.min(1, input[i]));
+    output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+  }
+  return output;
+}
+
+// Listen for final/partial transcripts from background
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === 'TRANSCRIPT_PARTIAL') {
+    console.log('[Partial]', request.data.partial);
+    // You can inject partial into the DOM or overlay
+  } else if (request.type === 'TRANSCRIPT_FINAL') {
+    console.log('[Final]', request.data.text);
+    // You can display final in the DOM or overlay
+  }
+});
+
+// Auto-start or call from an extension UI
+startRecording();
